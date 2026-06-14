@@ -1,0 +1,43 @@
+services:
+    db:
+        image: postgres:16-alpine
+        container_name: servicehub-db
+        environment:
+            POSTGRES_DB: servicehub
+            POSTGRES_USER: servicehub_user
+            POSTGRES_PASSWORD: veryHardPassword
+        ports:
+            - 5432:5432
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - backend
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U servicehub_user -d servicehub"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    app:
+        build: ./ServiceHub
+        container_name: servicehub-api
+        depends_on: 
+            db:
+                condition: service_healthy
+        environment:
+            DB_HOST: db
+            DB_PORT: 5432
+            DB_NAME: servicehub
+            DB_USER: servicehub_user
+            DB_PASSWORD: veryHardPassword
+        ports:
+            - 8080:8080
+        networks:
+            - backend
+
+volumes:
+    pgdata: 
+
+networks:
+    backend:
+        driver: bridge
