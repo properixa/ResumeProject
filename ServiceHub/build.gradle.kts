@@ -22,6 +22,9 @@ dependencies {
     implementation("com.zaxxer:HikariCP:7.0.2")
     runtimeOnly("org.postgresql:postgresql:42.7.11")
     compileOnly("jakarta.servlet:jakarta.servlet-api:6.1.0")
+    compileOnly("org.projectlombok:lombok:1.18.46")
+    annotationProcessor("org.projectlombok:lombok:1.18.46")
+    implementation("tools.jackson.core:jackson-databind:3.2.0")
 }
 
 tasks.test {
