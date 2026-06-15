@@ -1,7 +1,7 @@
 package org.servicehub.repository;
 
-import org.servicehub.entity.ServicehubUser;
-import org.springframework.data.repository.CrudRepository;
+import org.servicehub.entity.UserEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends CrudRepository<ServicehubUser, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
 }

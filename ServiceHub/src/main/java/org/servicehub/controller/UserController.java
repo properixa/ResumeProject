@@ -1,12 +1,15 @@
 package org.servicehub.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.servicehub.dto.PostUser;
-import org.servicehub.entity.ServicehubUser;
+import org.servicehub.dto.UserCreateRequest;
+import org.servicehub.dto.UserResponse;
 import org.servicehub.service.ServicehubUserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -16,22 +19,18 @@ public class UserController {
     private final ServicehubUserService servicehubUserService;
 
     @GetMapping
-    public Iterable<ServicehubUser> getAll() {
+    public List<UserResponse> getAll() {
         return servicehubUserService.getAll();
     }
 
     @GetMapping("/{id}")
-    public Optional<ServicehubUser> getUser(@PathVariable Long id) {
+    public UserResponse getUser(@PathVariable("id") Long id) {
         return servicehubUserService.getById(id);
     }
 
     @PostMapping
-    public ServicehubUser createUser(@RequestBody PostUser postUser) {
-        ServicehubUser user = new ServicehubUser();
-        user.setEmail(postUser.email());
-        user.setFullName(postUser.fullName());
-        user.setPhone(postUser.phone());
-        servicehubUserService.create(user);
-        return user;
+    public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequest userCreateRequest) {
+        UserResponse user = servicehubUserService.create(userCreateRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(user);
     }
 }
