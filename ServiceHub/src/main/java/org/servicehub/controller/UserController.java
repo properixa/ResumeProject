@@ -1,10 +1,9 @@
 package org.servicehub.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.servicehub.dto.UserCreateRequest;
-import org.servicehub.dto.UserResponse;
-import org.servicehub.dto.UserUpdateRequest;
+import org.servicehub.dto.user.UserCreateRequest;
+import org.servicehub.dto.user.UserResponse;
+import org.servicehub.dto.user.UserUpdateRequest;
 import org.servicehub.service.ServicehubUserService;
 import org.servicehub.validation.groups.First;
 import org.servicehub.validation.groups.Second;
@@ -46,5 +45,13 @@ public class UserController {
     public ResponseEntity<UserResponse> createUser(@Validated({First.class, Second.class}) @RequestBody UserCreateRequest userCreateRequest) {
         UserResponse user = servicehubUserService.create(userCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(
+            @PathVariable("id") Long id
+    ) {
+        servicehubUserService.remove(id);
+        return ResponseEntity.noContent().build();
     }
 }

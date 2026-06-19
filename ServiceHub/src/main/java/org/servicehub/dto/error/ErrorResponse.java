@@ -1,4 +1,4 @@
-package org.servicehub.dto;
+package org.servicehub.dto.error;
 
 public record ErrorResponse(
         int status,

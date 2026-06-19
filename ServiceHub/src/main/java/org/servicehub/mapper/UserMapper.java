@@ -1,9 +1,9 @@
 package org.servicehub.mapper;
 
 import org.mapstruct.*;
-import org.servicehub.dto.UserCreateRequest;
-import org.servicehub.dto.UserResponse;
-import org.servicehub.dto.UserUpdateRequest;
+import org.servicehub.dto.user.UserCreateRequest;
+import org.servicehub.dto.user.UserResponse;
+import org.servicehub.dto.user.UserUpdateRequest;
 import org.servicehub.entity.UserEntity;
 
 import java.util.stream.Collectors;

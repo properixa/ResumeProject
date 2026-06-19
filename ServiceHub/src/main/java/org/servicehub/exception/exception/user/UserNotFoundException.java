@@ -1,4 +1,4 @@
-package org.servicehub.exception.exception;
+package org.servicehub.exception.exception.user;
 
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(String message) {

@@ -1,19 +1,19 @@
 package org.servicehub.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.servicehub.dto.UserCreateRequest;
-import org.servicehub.dto.UserResponse;
-import org.servicehub.dto.UserUpdateRequest;
+import org.servicehub.dto.user.UserCreateRequest;
+import org.servicehub.dto.user.UserResponse;
+import org.servicehub.dto.user.UserUpdateRequest;
 import org.servicehub.entity.RoleEntity;
 import org.servicehub.entity.UserEntity;
-import org.servicehub.exception.exception.DuplicateEmailException;
-import org.servicehub.exception.exception.InvalidRoleException;
-import org.servicehub.exception.exception.UserNotFoundException;
+import org.servicehub.exception.exception.user.DuplicateEmailException;
+import org.servicehub.exception.exception.user.InvalidRoleException;
+import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.UserMapper;
 import org.servicehub.repository.RoleRepository;
 import org.servicehub.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
