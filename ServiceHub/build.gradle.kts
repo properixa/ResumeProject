@@ -27,6 +27,8 @@ dependencies {
     implementation("tools.jackson.core:jackson-databind:3.2.0")
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
+    implementation("ch.qos.logback:logback-classic:1.5.34")
+    implementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
 }
 
 tasks.test {

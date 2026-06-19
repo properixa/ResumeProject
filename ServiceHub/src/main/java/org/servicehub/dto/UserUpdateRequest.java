@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import org.servicehub.validation.groups.First;
 import org.servicehub.validation.groups.Second;
 
-public record UserCreateRequest(
+public record UserUpdateRequest(
         @NotBlank(groups = First.class, message = "name should exist")
         @Pattern(groups = Second.class, regexp = "^[a-zA-Zа-яА-ЯёЁ'-]{2,} [a-zA-Zа-яА-ЯёЁ'-]{2,}( [a-zA-Zа-яА-ЯёЁ'-]{2,})?$",
                 message = "must contains name, surname in right format")

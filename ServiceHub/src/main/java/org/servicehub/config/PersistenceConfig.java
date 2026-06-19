@@ -3,9 +3,12 @@ package org.servicehub.config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -17,12 +20,15 @@ import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
+@Slf4j
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "org.servicehub.repository")
 public class PersistenceConfig {
 
+
     @Bean(initMethod = "migrate")
     public Flyway flyway(DataSource dataSource) {
+        log.info("Flyway bean constructor");
         return Flyway.configure()
                 .dataSource(dataSource)
                 .load();
@@ -40,6 +46,7 @@ public class PersistenceConfig {
     }
 
     @Bean
+    @DependsOn("flyway")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
 
