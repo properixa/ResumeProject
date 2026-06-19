@@ -3,6 +3,7 @@ package org.servicehub.exception.handler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.servicehub.dto.ErrorResponse;
 import org.servicehub.exception.exception.DuplicateEmailException;
+import org.servicehub.exception.exception.InvalidRoleException;
 import org.servicehub.exception.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,6 +45,17 @@ public class UserExceptionHandler {
                 .body(new ErrorResponse(
                         409,
                         "Duplicated emails",
+                        ex.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(InvalidRoleException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRole(InvalidRoleException ex, HttpServletRequest request) {
+        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Invalid role",
                         ex.getMessage(),
                         request.getRequestURI()
                 ));

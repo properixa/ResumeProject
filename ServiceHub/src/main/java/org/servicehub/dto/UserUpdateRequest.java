@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import org.servicehub.validation.groups.First;
 import org.servicehub.validation.groups.Second;
 
+import java.util.Set;
+
 public record UserUpdateRequest(
         @NotBlank(groups = First.class, message = "name should exist")
         @Pattern(groups = Second.class, regexp = "^[a-zA-Zа-яА-ЯёЁ'-]{2,} [a-zA-Zа-яА-ЯёЁ'-]{2,}( [a-zA-Zа-яА-ЯёЁ'-]{2,})?$",
@@ -16,5 +18,6 @@ public record UserUpdateRequest(
         String email,
         @NotBlank(groups = First.class, message = "phone should exist")
         @Pattern(groups = Second.class, regexp = "^\\d{7,15}$", message = "must contains phone number")
-        String phone) {
+        String phone,
+        Set<String> roles) {
 }

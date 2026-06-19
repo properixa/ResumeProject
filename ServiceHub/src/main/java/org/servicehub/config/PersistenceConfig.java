@@ -28,7 +28,6 @@ public class PersistenceConfig {
 
     @Bean(initMethod = "migrate")
     public Flyway flyway(DataSource dataSource) {
-        log.info("Flyway bean constructor");
         return Flyway.configure()
                 .dataSource(dataSource)
                 .load();
