@@ -2,7 +2,6 @@ package org.servicehub.exception.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.servicehub.dto.error.ErrorResponse;
-import org.servicehub.exception.exception.service.UserServiceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,14 +9,14 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
-public class ServiceExceptionHandler {
-    @ExceptionHandler(UserServiceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleServiceNotFound(UserServiceNotFoundException ex,
-                                                               HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).contentType(MediaType.APPLICATION_JSON)
+public class GlobalExceptionHandler {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorResponse(
-                        404,
-                        "Service Not Found",
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Invalid argument",
                         ex.getMessage(),
                         request.getRequestURI()
                 ));

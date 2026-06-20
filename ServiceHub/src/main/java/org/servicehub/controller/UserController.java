@@ -8,11 +8,11 @@ import org.servicehub.service.ServicehubUserService;
 import org.servicehub.validation.groups.First;
 import org.servicehub.validation.groups.Second;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -38,13 +38,14 @@ public class UserController {
             @Validated({First.class, Second.class}) @RequestBody UserUpdateRequest request) {
 
         UserResponse user = servicehubUserService.update(id, request);
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(user);
+        return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Validated({First.class, Second.class}) @RequestBody UserCreateRequest userCreateRequest) {
         UserResponse user = servicehubUserService.create(userCreateRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(user);
+        return ResponseEntity.created(URI.create("/api/user/" + user.id()))
+                .body(user);
     }
 
     @DeleteMapping("/{id}")

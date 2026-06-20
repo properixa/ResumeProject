@@ -8,6 +8,7 @@ import org.servicehub.service.ServiceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -39,7 +40,9 @@ public class ServiceController {
             @RequestBody ServiceCreateRequest request,
             @RequestParam("id") Long executorId
             ) {
-        return ResponseEntity.ok(service.create(request, executorId));
+        ServiceResponse response = service.create(request, executorId);
+        return ResponseEntity.created(URI.create("/api/service/" + response.id()))
+                .body(response);
     }
 
     @DeleteMapping("/{id}")

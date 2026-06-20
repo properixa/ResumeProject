@@ -75,6 +75,9 @@ public class ServicehubUserService {
 
     @Transactional
     public void remove(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User " + id + " not found");
+        }
         userRepository.deleteById(id);
     }
 }
