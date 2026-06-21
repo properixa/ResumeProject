@@ -1,18 +1,15 @@
 package org.servicehub.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.servicehub.dto.user.UserCreateRequest;
 import org.servicehub.dto.user.UserResponse;
 import org.servicehub.dto.user.UserUpdateRequest;
 import org.servicehub.service.ServicehubUserService;
-import org.servicehub.validation.groups.First;
-import org.servicehub.validation.groups.Second;
+import org.servicehub.validation.groups.ValidationSequence;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -35,17 +32,10 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable("id") Long id,
-            @Validated({First.class, Second.class}) @RequestBody UserUpdateRequest request) {
+            @Validated(ValidationSequence.class) @RequestBody UserUpdateRequest request) {
 
         UserResponse user = servicehubUserService.update(id, request);
         return ResponseEntity.status(HttpStatus.OK).body(user);
-    }
-
-    @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Validated({First.class, Second.class}) @RequestBody UserCreateRequest userCreateRequest) {
-        UserResponse user = servicehubUserService.create(userCreateRequest);
-        return ResponseEntity.created(URI.create("/api/user/" + user.id()))
-                .body(user);
     }
 
     @DeleteMapping("/{id}")

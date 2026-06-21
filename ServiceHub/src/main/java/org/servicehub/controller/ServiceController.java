@@ -1,11 +1,13 @@
 package org.servicehub.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.servicehub.dto.auth.UserPrincipal;
 import org.servicehub.dto.service.ServiceCreateRequest;
 import org.servicehub.dto.service.ServiceResponse;
 import org.servicehub.dto.service.ServiceUpdateRequest;
 import org.servicehub.service.ServiceService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -38,9 +40,9 @@ public class ServiceController {
     @PostMapping
     public ResponseEntity<ServiceResponse> create(
             @RequestBody ServiceCreateRequest request,
-            @RequestParam("id") Long executorId
+            @AuthenticationPrincipal UserPrincipal principal
             ) {
-        ServiceResponse response = service.create(request, executorId);
+        ServiceResponse response = service.create(request, principal.id());
         return ResponseEntity.created(URI.create("/api/service/" + response.id()))
                 .body(response);
     }

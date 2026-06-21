@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
+import org.servicehub.dto.auth.UserPrincipal;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,11 +41,17 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             return;
         }
 
+        Long id = provider.getIdFromToken(token);
         String email = provider.getEmailFromToken(token);
         Set<String> roles = provider.getRolesFromToken(token);
 
+        UserPrincipal principal = new UserPrincipal(
+                id,
+                email
+        );
+
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                email, null, roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet())
+                principal, null, roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet())
         );
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 

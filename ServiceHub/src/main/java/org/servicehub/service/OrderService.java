@@ -1,6 +1,7 @@
 package org.servicehub.service;
 
 import lombok.RequiredArgsConstructor;
+import org.servicehub.dto.auth.UserPrincipal;
 import org.servicehub.dto.order.OrderCreateRequest;
 import org.servicehub.dto.order.OrderResponse;
 import org.servicehub.dto.order.OrderUpdateRequest;
@@ -10,6 +11,7 @@ import org.servicehub.entity.ServiceEntity;
 import org.servicehub.entity.UserEntity;
 import org.servicehub.entity.enums.OrderStatus;
 import org.servicehub.exception.exception.order.InvalidForServiceExecutorException;
+import org.servicehub.exception.exception.order.OrderChangeStatusException;
 import org.servicehub.exception.exception.order.OrderNotFoundException;
 import org.servicehub.exception.exception.order.OrderStatusNotFoundException;
 import org.servicehub.exception.exception.service.UserServiceNotFoundException;
@@ -19,6 +21,7 @@ import org.servicehub.mapper.OrderMapper;
 import org.servicehub.repository.OrderRepository;
 import org.servicehub.repository.ServiceRepository;
 import org.servicehub.repository.UserRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +36,11 @@ public class OrderService {
     private final OrderMapper mapper;
 
     @Transactional
-    public OrderResponse create(OrderCreateRequest request, Long customerId) {
+    public OrderResponse create(OrderCreateRequest request,
+                                UserPrincipal principal) {
         OrderEntity entity = mapper.toEntity(request);
-        UserEntity customer = userRepository.findById(customerId)
-                .orElseThrow(() -> new UserNotFoundException("Customer user " + customerId + " not found"));
+        UserEntity customer = userRepository.findById(principal.id())
+                .orElseThrow(() -> new UserNotFoundException("Customer user " + principal.id() + " not found"));
 
         validateAndSetExecutorAndService(request, entity);
 
@@ -58,6 +62,7 @@ public class OrderService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public OrderResponse update(Long id, OrderUpdateRequest request) {
         OrderEntity entity = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
@@ -84,11 +89,63 @@ public class OrderService {
     }
 
     @Transactional
+    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
     public void remove(Long id) {
-        if (!orderRepository.existsById(id)) {
-            throw new OrderNotFoundException("Order " + id + " not found");
+        OrderEntity entity = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
+        orderRepository.delete(entity);
+    }
+
+    @Transactional
+    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
+    public OrderResponse acceptOrder(Long id) {
+        OrderEntity entity = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
+        if (entity.getStatus().equals(OrderStatus.NEW)) {
+            entity.setStatus(OrderStatus.ACCEPTED);
+        } else {
+            throw new OrderChangeStatusException("Order " + id + " unavailable to accept (wrong status)");
         }
-        orderRepository.deleteById(id);
+        return mapper.toDto(entity);
+    }
+
+    @Transactional
+    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
+    public OrderResponse startOrder(Long id) {
+        OrderEntity entity = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
+        if (entity.getStatus().equals(OrderStatus.ACCEPTED)) {
+            entity.setStatus(OrderStatus.IN_PROGRESS);
+        } else {
+            throw new OrderChangeStatusException("Order " + id + " unavailable to start (wrong status)");
+        }
+        return mapper.toDto(entity);
+    }
+
+    @Transactional
+    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
+    public OrderResponse cancelOrder(Long id) {
+        OrderEntity entity = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
+        if (!entity.getStatus().equals(OrderStatus.CANCELLED)) {
+            entity.setStatus(OrderStatus.CANCELLED);
+        } else {
+            throw new OrderChangeStatusException("Order " + id + " unavailable to cancel (canceling cancel??)");
+        }
+        return mapper.toDto(entity);
+    }
+
+    @Transactional
+    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
+    public OrderResponse completeOrder(Long id) {
+        OrderEntity entity = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
+        if (entity.getStatus().equals(OrderStatus.IN_PROGRESS)) {
+            entity.setStatus(OrderStatus.COMPLETED);
+        } else {
+            throw new OrderChangeStatusException("Order " + id + " unavailable to complete");
+        }
+        return mapper.toDto(entity);
     }
 
     private void validateAndSetExecutorAndService(OrderRequest request, OrderEntity entity) {

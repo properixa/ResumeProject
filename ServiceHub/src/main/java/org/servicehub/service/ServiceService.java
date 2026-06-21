@@ -13,6 +13,7 @@ import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.ServiceMapper;
 import org.servicehub.repository.ServiceRepository;
 import org.servicehub.repository.UserRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class ServiceService {
     private final ServiceMapper mapper;
 
     @Transactional
+    @PreAuthorize("hasRole('EXECUTOR')")
     public ServiceResponse create(ServiceCreateRequest request, Long executorId) {
 
         ServiceEntity entity = mapper.toEntity(request);
@@ -54,6 +56,7 @@ public class ServiceService {
     }
 
     @Transactional
+    @PreAuthorize("@serviceSecurity.canModifyAndDelete(#a0, authentication)")
     public ServiceResponse update(Long id, ServiceUpdateRequest request) {
         ServiceEntity entity = serviceRepository.findById(id)
                 .orElseThrow(() -> new UserServiceNotFoundException("Service " + id + " not found"));
@@ -71,10 +74,10 @@ public class ServiceService {
     }
 
     @Transactional
+    @PreAuthorize("@serviceSecurity.canModifyAndDelete(#a0, authentication)")
     public void remove(Long id) {
-        if (!serviceRepository.existsById(id)) {
-            throw new UserServiceNotFoundException("Service " + id + " not found");
-        }
-        serviceRepository.deleteById(id);
+        ServiceEntity entity = serviceRepository.findById(id)
+                .orElseThrow(() -> new UserServiceNotFoundException("Service " + id + " not found"));
+        serviceRepository.delete(entity);
     }
 }

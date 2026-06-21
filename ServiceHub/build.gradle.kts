@@ -11,9 +11,17 @@ repositories {
 }
 
 dependencies {
+    // test implementations
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.springframework:spring-test:7.0.8")
+    testImplementation("org.springframework.security:spring-security-test:7.1.0")
+    testImplementation("org.assertj:assertj-core:4.0.0-M1")
+    testImplementation("org.mockito:mockito-core:5.23.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.23.0")
+
+    // implementations
     implementation("org.springframework:spring-webmvc:7.0.8")
     implementation("org.flywaydb:flyway-core:12.8.1")
     runtimeOnly("org.flywaydb:flyway-database-postgresql:12.8.1")

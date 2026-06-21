@@ -1,4 +1,4 @@
 package org.servicehub.validation.groups;
 
-public interface Second {
+public interface SecondGroup {
 }

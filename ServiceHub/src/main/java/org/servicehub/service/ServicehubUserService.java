@@ -12,6 +12,7 @@ import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.UserMapper;
 import org.servicehub.repository.RoleRepository;
 import org.servicehub.repository.UserRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,7 @@ public class ServicehubUserService {
     }
 
     @Transactional
+    @PreAuthorize("@userSecurity.canModifyAndDelete(#a0, authentication)")
     public UserResponse update(Long id, UserUpdateRequest request) {
         UserEntity userEntity = userRepository.findById(id).orElseThrow(() ->
                 new UserNotFoundException("User %d not found".formatted(id)));
@@ -78,10 +80,10 @@ public class ServicehubUserService {
     }
 
     @Transactional
+    @PreAuthorize("@userSecurity.canModifyAndDelete(#a0, authentication)")
     public void remove(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User " + id + " not found");
-        }
-        userRepository.deleteById(id);
+        UserEntity entity = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User " + id + " not found"));
+        userRepository.delete(entity);
     }
 }

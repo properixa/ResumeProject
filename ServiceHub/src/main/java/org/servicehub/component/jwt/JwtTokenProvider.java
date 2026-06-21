@@ -4,7 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.flywaydb.core.internal.database.DatabaseExecutionStrategy;
+import org.servicehub.component.security.ServicehubUserDetails;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -20,8 +21,14 @@ public class JwtTokenProvider {
     );
     private final long validityInMs = 3_600_000;
 
-    public String createToken(String email, Set<String> roles) {
-        Claims claims = Jwts.claims().subject(email).add("roles", roles).build();
+    public String createToken(ServicehubUserDetails principal) {
+        Claims claims = Jwts.claims().subject(principal.getUsername())
+                .add("id", principal.getId())
+                .add("roles", principal.getAuthorities()
+                        .stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .toList())
+                .build();
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMs);
 
@@ -54,5 +61,11 @@ public class JwtTokenProvider {
         return roles.stream()
                 .map(String.class::cast)
                 .collect(Collectors.toSet());
+    }
+
+    public Long getIdFromToken(String token) {
+        return Jwts.parser().verifyWith(key).build()
+                .parseSignedClaims(token).getPayload()
+                .get("id", Long.class);
     }
 }

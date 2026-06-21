@@ -3,6 +3,7 @@ package org.servicehub.exception.handler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.servicehub.dto.error.ErrorResponse;
 import org.servicehub.exception.exception.order.InvalidForServiceExecutorException;
+import org.servicehub.exception.exception.order.OrderChangeStatusException;
 import org.servicehub.exception.exception.order.OrderNotFoundException;
 import org.servicehub.exception.exception.order.OrderStatusNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,19 @@ public class OrderExceptionHandler {
                    "Order status is invalid",
                    ex.getMessage(),
                    request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(OrderChangeStatusException.class)
+    public ResponseEntity<ErrorResponse> handleOrderChangeStatus(OrderChangeStatusException ex,
+                                                                 HttpServletRequest request) {
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Unavailable to change status",
+                        ex.getMessage(),
+                        request.getRequestURI()
                 ));
     }
 }
