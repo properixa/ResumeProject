@@ -23,6 +23,8 @@ public class UserEntity {
     private String patronymic;
     private String email;
     private String phone;
+    private String password;
+    private Boolean enabled;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

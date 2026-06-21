@@ -11,6 +11,7 @@ public record UserCreateRequest(
         @Pattern(groups = Second.class, regexp = "^[a-zA-Zа-яА-ЯёЁ'-]{2,} [a-zA-Zа-яА-ЯёЁ'-]{2,}( [a-zA-Zа-яА-ЯёЁ'-]{2,})?$",
                 message = "must contains name, surname in right format")
         String fullName,
+        String password,
         @NotBlank(groups = First.class, message = "email should exist")
         @Email(groups = Second.class, message = "email should be in right format")
         String email,

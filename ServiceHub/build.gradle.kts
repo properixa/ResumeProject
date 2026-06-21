@@ -29,6 +29,11 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
     implementation("ch.qos.logback:logback-classic:1.5.34")
     implementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
+    implementation("org.springframework.security:spring-security-config:7.1.0")
+    implementation("org.springframework.security:spring-security-web:7.1.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
 }
 
 tasks.test {

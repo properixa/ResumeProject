@@ -27,6 +27,8 @@ public interface UserMapper {
     @Mapping(target = "name", ignore = true)
     @Mapping(target = "patronymic", ignore = true)
     @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "password", ignore = true)
     UserEntity toEntity(UserCreateRequest dto);
 
     @Mapping(target = "id", ignore = true)
@@ -34,6 +36,8 @@ public interface UserMapper {
     @Mapping(target = "name", ignore = true)
     @Mapping(target = "patronymic", ignore = true)
     @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "password", ignore = true)
     void toEntity(UserUpdateRequest dto, @MappingTarget UserEntity entity);
 
     @AfterMapping
@@ -49,14 +53,6 @@ public interface UserMapper {
             entity.setSurname(parts.length > 0 ? parts[0] : null);
             entity.setName(parts.length > 1 ? parts[1] : null);
             entity.setPatronymic(parts.length > 2 ? parts[2] : null);
-        }
-    }
-
-    @AfterMapping
-    default void parseRoles(Object dto, @MappingTarget UserEntity entity) {
-
-        if (dto instanceof UserUpdateRequest) {
-
         }
     }
 }

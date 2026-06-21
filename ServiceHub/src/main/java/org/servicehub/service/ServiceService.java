@@ -21,7 +21,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ServiceService {
-    private final ServicehubUserService userService;
     private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
     private final ServiceMapper mapper;

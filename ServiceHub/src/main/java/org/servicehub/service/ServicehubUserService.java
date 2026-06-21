@@ -12,6 +12,7 @@ import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.UserMapper;
 import org.servicehub.repository.RoleRepository;
 import org.servicehub.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class ServicehubUserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public UserResponse create(UserCreateRequest data) {
@@ -35,6 +37,8 @@ public class ServicehubUserService {
         RoleEntity role = roleRepository.findByName("USER")
                 .orElseThrow(() -> new RuntimeException("Role USER not found"));
         user.getRoles().add(role);
+        user.setEnabled(true);
+        user.setPassword(passwordEncoder.encode(data.password()));
 
         return mapper.toDto(userRepository.save(user));
     }
