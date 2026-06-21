@@ -31,13 +31,9 @@ public class ServicehubUserDetailsService implements UserDetailsService {
         UserEntity userEntity = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        log.info("UserEntity finded");
-
         Set<GrantedAuthority> authorities = userEntity.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
                 .collect(Collectors.toSet());
-
-        log.info("Authorities created");
 
         return new User(
                 userEntity.getEmail(),
