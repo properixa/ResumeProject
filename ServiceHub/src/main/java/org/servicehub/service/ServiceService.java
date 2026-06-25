@@ -35,10 +35,6 @@ public class ServiceService {
         UserEntity executor = userRepository.findById(executorId)
                 .orElseThrow(() -> new UserNotFoundException("User " + executorId + " not found"));
 
-        if (executor.getRoles().stream().noneMatch(x -> x.getName().equals("EXECUTOR"))) {
-            throw new InvalidRoleException("User is not executor");
-        }
-
         entity.setExecutor(executor);
 
         return mapper.toDto(serviceRepository.save(entity));
