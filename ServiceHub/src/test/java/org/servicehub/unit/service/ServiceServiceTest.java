@@ -1,4 +1,4 @@
-package org.servicehub.unit;
+package org.servicehub.unit.service;
 
 import org.assertj.core.api.CollectionAssert;
 import org.junit.jupiter.api.Test;

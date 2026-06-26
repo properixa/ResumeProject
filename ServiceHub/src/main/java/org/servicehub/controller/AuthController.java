@@ -1,17 +1,12 @@
 package org.servicehub.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.servicehub.component.jwt.JwtTokenProvider;
-import org.servicehub.component.security.ServicehubUserDetails;
 import org.servicehub.dto.auth.LoginRequest;
 import org.servicehub.dto.user.UserCreateRequest;
 import org.servicehub.dto.user.UserResponse;
-import org.servicehub.service.ServicehubUserService;
+import org.servicehub.service.AuthService;
 import org.servicehub.validation.groups.ValidationSequence;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,28 +21,17 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthenticationManager authManager;
-    private final JwtTokenProvider provider;
-    private final ServicehubUserService userService;
+    private final AuthService authService;
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
-        Authentication auth = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
-
-        ServicehubUserDetails principal =
-                (ServicehubUserDetails) auth.getPrincipal();
-
-        assert principal != null;
-        String token = provider.createToken(principal);
-
+        String token = authService.getToken(request);
         return ResponseEntity.ok(Map.of("token", token));
     }
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Validated(ValidationSequence.class) @RequestBody UserCreateRequest request) {
-        UserResponse response = userService.create(request);
+        UserResponse response = authService.register(request);
         return ResponseEntity.created(URI.create("/api/users/" + response.id()))
                 .body(response);
     }

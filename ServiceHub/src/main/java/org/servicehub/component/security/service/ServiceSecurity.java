@@ -5,9 +5,12 @@ import org.servicehub.dto.auth.UserPrincipal;
 import org.servicehub.entity.ServiceEntity;
 import org.servicehub.exception.exception.order.OrderNotFoundException;
 import org.servicehub.exception.exception.security.PrincipalException;
+import org.servicehub.exception.exception.service.UserServiceNotFoundException;
 import org.servicehub.repository.ServiceRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 
@@ -29,7 +32,7 @@ public class ServiceSecurity {
             throw new PrincipalException("User principal is null");
         }
         ServiceEntity service = serviceRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
+                .orElseThrow(() -> new UserServiceNotFoundException("Service " + id + " not found"));
         return service.getExecutor().getId().equals(principal.id());
     }
 

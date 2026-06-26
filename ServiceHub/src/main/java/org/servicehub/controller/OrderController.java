@@ -51,24 +51,4 @@ public class OrderController {
         orderService.remove(id);
         return ResponseEntity.noContent().build();
     }
-
-    @PatchMapping("/{id}/accept")
-    public ResponseEntity<OrderResponse> acceptOrder(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(orderService.acceptOrder(id));
-    }
-
-    @PatchMapping("/{id}/start")
-    public ResponseEntity<OrderResponse> startOrder(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(orderService.startOrder(id));
-    }
-
-    @PatchMapping("/{id}/cancel")
-    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(orderService.cancelOrder(id));
-    }
-
-    @PatchMapping("/{id}/complete")
-    public ResponseEntity<OrderResponse> completeOrder(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(orderService.completeOrder(id));
-    }
 }

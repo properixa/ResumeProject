@@ -27,13 +27,14 @@ public class OrderSecurity {
             return true;
         }
 
-        OrderEntity order = orderRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
-
         UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
         if (principal == null) {
             throw new PrincipalException("Principal is null");
         }
+
+        OrderEntity order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
+
         return order.getExecutor().getId().equals(principal.id());
     }
 }

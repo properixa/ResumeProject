@@ -96,58 +96,6 @@ public class OrderService {
         orderRepository.delete(entity);
     }
 
-    @Transactional
-    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
-    public OrderResponse acceptOrder(Long id) {
-        OrderEntity entity = orderRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
-        if (entity.getStatus().equals(OrderStatus.NEW)) {
-            entity.setStatus(OrderStatus.ACCEPTED);
-        } else {
-            throw new OrderChangeStatusException("Order " + id + " unavailable to accept (wrong status)");
-        }
-        return mapper.toDto(entity);
-    }
-
-    @Transactional
-    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
-    public OrderResponse startOrder(Long id) {
-        OrderEntity entity = orderRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
-        if (entity.getStatus().equals(OrderStatus.ACCEPTED)) {
-            entity.setStatus(OrderStatus.IN_PROGRESS);
-        } else {
-            throw new OrderChangeStatusException("Order " + id + " unavailable to start (wrong status)");
-        }
-        return mapper.toDto(entity);
-    }
-
-    @Transactional
-    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
-    public OrderResponse cancelOrder(Long id) {
-        OrderEntity entity = orderRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
-        if (!entity.getStatus().equals(OrderStatus.CANCELLED)) {
-            entity.setStatus(OrderStatus.CANCELLED);
-        } else {
-            throw new OrderChangeStatusException("Order " + id + " unavailable to cancel (canceling cancel??)");
-        }
-        return mapper.toDto(entity);
-    }
-
-    @Transactional
-    @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
-    public OrderResponse completeOrder(Long id) {
-        OrderEntity entity = orderRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
-        if (entity.getStatus().equals(OrderStatus.IN_PROGRESS)) {
-            entity.setStatus(OrderStatus.COMPLETED);
-        } else {
-            throw new OrderChangeStatusException("Order " + id + " unavailable to complete");
-        }
-        return mapper.toDto(entity);
-    }
-
     private void validateAndSetExecutorAndService(OrderRequest request, OrderEntity entity) {
         UserEntity executor = userRepository.findById(request.executorId())
                 .orElseThrow(() -> new UserNotFoundException("Executor user " + request.executorId() + " not found"));

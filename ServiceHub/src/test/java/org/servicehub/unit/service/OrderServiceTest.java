@@ -1,4 +1,4 @@
-package org.servicehub.unit;
+package org.servicehub.unit.service;
 
 import org.assertj.core.api.CollectionAssert;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,6 @@ import org.servicehub.entity.ServiceEntity;
 import org.servicehub.entity.UserEntity;
 import org.servicehub.entity.enums.OrderStatus;
 import org.servicehub.exception.exception.order.InvalidForServiceExecutorException;
-import org.servicehub.exception.exception.order.OrderChangeStatusException;
 import org.servicehub.exception.exception.order.OrderNotFoundException;
 import org.servicehub.exception.exception.order.OrderStatusNotFoundException;
 import org.servicehub.exception.exception.user.InvalidRoleException;
@@ -235,142 +234,6 @@ public class OrderServiceTest {
 
         assertThatThrownBy(() -> service.remove(1L))
                 .isInstanceOf(OrderNotFoundException.class);
-    }
-
-    @Test
-    void acceptOrder_shouldAccept() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.NEW);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        service.acceptOrder(1L);
-        assertThat(entity.getStatus()).isEqualTo(OrderStatus.ACCEPTED);
-        verify(mapper).toDto(entity);
-    }
-
-    @Test
-    void acceptOrder_shouldThrowWhenOrderNotFound() {
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.acceptOrder(1L))
-                .isInstanceOf(OrderNotFoundException.class);
-    }
-
-    @Test
-    void acceptOrder_shouldThrowWhenStatusIncorrect() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.IN_PROGRESS);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        assertThatThrownBy(() -> service.acceptOrder(1L))
-                .isInstanceOf(OrderChangeStatusException.class);
-    }
-
-    @Test
-    void startOrder_shouldStart() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.ACCEPTED);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        service.startOrder(1L);
-        assertThat(entity.getStatus()).isEqualTo(OrderStatus.IN_PROGRESS);
-        verify(mapper).toDto(entity);
-    }
-
-    @Test
-    void startOrder_shouldThrowWhenOrderNotFound() {
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.startOrder(1L))
-                .isInstanceOf(OrderNotFoundException.class);
-    }
-
-    @Test
-    void startOrder_shouldThrowWhenStatusIncorrect() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.IN_PROGRESS);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        assertThatThrownBy(() -> service.startOrder(1L))
-                .isInstanceOf(OrderChangeStatusException.class);
-    }
-
-    @Test
-    void cancelOrder_shouldCancel() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.NEW);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        service.cancelOrder(1L);
-        assertThat(entity.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        verify(mapper).toDto(entity);
-    }
-
-    @Test
-    void cancelOrder_shouldThrowWhenOrderNotFound() {
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.cancelOrder(1L))
-                .isInstanceOf(OrderNotFoundException.class);
-    }
-
-    @Test
-    void cancelOrder_shouldThrowWhenStatusIncorrect() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.CANCELLED);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        assertThatThrownBy(() -> service.cancelOrder(1L))
-                .isInstanceOf(OrderChangeStatusException.class);
-    }
-
-    @Test
-    void completeOrder_shouldComplete() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.IN_PROGRESS);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        service.completeOrder(1L);
-        assertThat(entity.getStatus()).isEqualTo(OrderStatus.COMPLETED);
-        verify(mapper).toDto(entity);
-    }
-
-    @Test
-    void completeOrder_shouldThrowWhenOrderNotFound() {
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.completeOrder(1L))
-                .isInstanceOf(OrderNotFoundException.class);
-    }
-
-    @Test
-    void completeOrder_shouldThrowWhenStatusIncorrect() {
-        var entity = new OrderEntity();
-        entity.setStatus(OrderStatus.NEW);
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(entity));
-
-        assertThatThrownBy(() -> service.completeOrder(1L))
-                .isInstanceOf(OrderChangeStatusException.class);
     }
 
     @Test

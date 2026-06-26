@@ -20,6 +20,9 @@ dependencies {
     testImplementation("org.assertj:assertj-core:4.0.0-M1")
     testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.23.0")
+    testImplementation("jakarta.servlet:jakarta.servlet-api:6.1.0")
+    testImplementation("org.hamcrest:hamcrest:3.0")
+    testImplementation("com.jayway.jsonpath:json-path:3.0.0")
 
     // implementations
     implementation("org.springframework:spring-webmvc:7.0.8")
