@@ -1,12 +1,14 @@
 package org.servicehub.web.controller;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.servicehub.dto.auth.UserPrincipal;
 import org.servicehub.dto.order.OrderCreateRequest;
 import org.servicehub.dto.order.OrderResponse;
 import org.servicehub.dto.order.OrderUpdateRequest;
 import org.servicehub.exception.exception.order.InvalidForServiceExecutorException;
+import org.servicehub.exception.exception.order.OrderChangeStatusException;
 import org.servicehub.exception.exception.order.OrderNotFoundException;
 import org.servicehub.exception.exception.order.OrderStatusNotFoundException;
 import org.servicehub.exception.exception.user.UserNotFoundException;
@@ -228,7 +230,55 @@ public class OrderControllerTest extends AbstractControllerTest {
 
     @Test
     @WithMockUser
-    void acceptOrder_willAccept() {
+    void updateStatus_shouldReturnResponse_whenAllValid() throws Exception {
+        Long orderId = 1L;
+        String newStatus = "ACCEPTED";
+        OrderResponse response = new OrderResponse(orderId, 1L, 1L, 1L, "", "");
 
+        Mockito.when(orderService.updateStatus(orderId, newStatus))
+                .thenReturn(response);
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(orderId));
+    }
+
+    @Test
+    @WithMockUser
+    void updateStatus_shouldReturn404_whenOrderNotFound() throws Exception {
+        Long orderId = 1L;
+        String newStatus = "NEW";
+
+        Mockito.when(orderService.updateStatus(orderId, newStatus))
+                .thenThrow(OrderNotFoundException.class);
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void updateStatus_shouldReturn400_whenOrderStatusInvalid() throws Exception {
+        Long orderId = 1L;
+        String newStatus = "INVALID";
+
+        Mockito.when(orderService.updateStatus(orderId, newStatus))
+                .thenThrow(OrderStatusNotFoundException.class);
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    void updateStatus_shouldReturn400_whenOrderStatusTransitionInvalid() throws Exception {
+        Long orderId = 1L;
+        String newStatus = "STATUS";
+
+        Mockito.when(orderService.updateStatus(orderId, newStatus))
+                .thenThrow(OrderChangeStatusException.class);
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
+                .andExpect(status().isBadRequest());
     }
 }
