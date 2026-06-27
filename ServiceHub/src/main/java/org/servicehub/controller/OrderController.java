@@ -1,6 +1,7 @@
 package org.servicehub.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.servicehub.dto.auth.UserPrincipal;
 import org.servicehub.dto.order.OrderCreateRequest;
@@ -42,7 +43,7 @@ public class OrderController {
 
     @PutMapping("/{id}")
     public ResponseEntity<OrderResponse> update(@PathVariable("id") Long id,
-                                @RequestBody OrderUpdateRequest request) {
+                                                @RequestBody OrderUpdateRequest request) {
         return ResponseEntity.ok(orderService.update(id, request));
     }
 
@@ -50,5 +51,11 @@ public class OrderController {
     public ResponseEntity<?> delete(@PathVariable("id") Long id) {
         orderService.remove(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/{status}")
+    public OrderResponse updateStatus(@PathVariable("id") Long id,
+                                      @PathVariable("status") @NotNull String status) {
+        return orderService.updateStatus(id, status.toUpperCase());
     }
 }
