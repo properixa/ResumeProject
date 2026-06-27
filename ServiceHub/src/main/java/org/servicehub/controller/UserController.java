@@ -1,16 +1,18 @@
 package org.servicehub.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.servicehub.dto.filter.UserFilter;
 import org.servicehub.dto.user.UserResponse;
 import org.servicehub.dto.user.UserUpdateRequest;
 import org.servicehub.service.ServicehubUserService;
 import org.servicehub.validation.groups.ValidationSequence;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,8 +22,9 @@ public class UserController {
     private final ServicehubUserService servicehubUserService;
 
     @GetMapping
-    public List<UserResponse> getAll() {
-        return servicehubUserService.getAll();
+    public Page<UserResponse> getAll(@ModelAttribute UserFilter filter,
+                                     @PageableDefault Pageable page) {
+        return servicehubUserService.getAll(filter, page);
     }
 
     @GetMapping("/{id}")
