@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.servicehub.dto.auth.UserPrincipal;
 import org.servicehub.dto.order.OrderCreateRequest;
@@ -16,6 +18,7 @@ import org.servicehub.entity.ServiceEntity;
 import org.servicehub.entity.UserEntity;
 import org.servicehub.entity.enums.OrderStatus;
 import org.servicehub.exception.exception.order.InvalidForServiceExecutorException;
+import org.servicehub.exception.exception.order.OrderChangeStatusException;
 import org.servicehub.exception.exception.order.OrderNotFoundException;
 import org.servicehub.exception.exception.order.OrderStatusNotFoundException;
 import org.servicehub.exception.exception.user.InvalidRoleException;
@@ -25,6 +28,10 @@ import org.servicehub.repository.OrderRepository;
 import org.servicehub.repository.ServiceRepository;
 import org.servicehub.repository.UserRepository;
 import org.servicehub.service.OrderService;
+import org.servicehub.util.security.SecurityHelper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,8 +39,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
@@ -284,5 +291,137 @@ public class OrderServiceTest {
 
         assertThatThrownBy(() -> service.create(request, principal))
                 .isInstanceOf(InvalidRoleException.class);
+    }
+
+    @Test
+    void updateStatus_shouldUpdateAndReturn_whenInputValid() {
+        Long orderId = 1L;
+        String newStatus = "ACCEPTED";
+        OrderEntity existingOrder = new OrderEntity();
+        existingOrder.setStatus(OrderStatus.NEW);
+
+        when(orderRepository.findById(1L))
+                .thenReturn(Optional.of(existingOrder));
+        when(mapper.toDto(existingOrder))
+                .thenReturn(new OrderResponse(1L, 1L, 1L, 1L, "test", "test"));
+
+        try (MockedStatic<SecurityHelper> helperMock = Mockito.mockStatic(SecurityHelper.class)) {
+            helperMock.when(() -> SecurityHelper.isAdmin(any(Authentication.class)))
+                    .thenReturn(false);
+
+            Authentication auth = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication())
+                    .thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            OrderResponse result = service.updateStatus(orderId, newStatus);
+
+            assertThat(result).isNotNull();
+            assertThat(existingOrder.getStatus()).isEqualTo(OrderStatus.ACCEPTED);
+        }
+    }
+
+    @Test
+    void updateStatus_shouldUpdateWhenAdmin_whenInvalidTransition() {
+        Long orderId = 1L;
+        String newStatus = "COMPLETED";
+        OrderEntity existingOrder = new OrderEntity();
+        existingOrder.setStatus(OrderStatus.NEW);
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(existingOrder));
+        when(mapper.toDto(existingOrder))
+                .thenReturn(new OrderResponse(1L, 1L, 1L, 1L, "", ""));
+
+        try (MockedStatic<SecurityHelper> helperMock = Mockito.mockStatic(SecurityHelper.class)) {
+            helperMock.when(() -> SecurityHelper.isAdmin(any(Authentication.class)))
+                    .thenReturn(true);
+
+            Authentication auth = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication())
+                    .thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            OrderResponse result = service.updateStatus(orderId, newStatus);
+
+            assertThat(result).isNotNull();
+            assertThat(existingOrder.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+        }
+    }
+
+    @Test
+    void updateStatus_shouldThrowException_whenOrderNotFound() {
+        Long orderId = 1L;
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateStatus(orderId, "new"))
+                .isInstanceOf(OrderNotFoundException.class);
+    }
+
+    @Test
+    void updateStatus_shouldThrowException_whenOrderStatusIncorrect() {
+        Long orderId = 1L;
+        String newStatus = "INCORRECT";
+        OrderEntity existingOrder = new OrderEntity();
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(existingOrder));
+
+        assertThatThrownBy(() -> service.updateStatus(orderId, newStatus))
+                .isInstanceOf(OrderStatusNotFoundException.class);
+    }
+
+    @Test
+    void updateStatus_shouldThrowException_whenTransitionNotExists() {
+        Long orderId = 1L;
+        String newStatus = "COMPLETED";
+        OrderEntity existingOrder = new OrderEntity();
+        existingOrder.setStatus(OrderStatus.CANCELLED);
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(existingOrder));
+
+        try (MockedStatic<SecurityHelper> helperMock = Mockito.mockStatic(SecurityHelper.class)) {
+            helperMock.when(() -> SecurityHelper.isAdmin(any(Authentication.class)))
+                    .thenReturn(false);
+
+            Authentication auth = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication())
+                    .thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            assertThatThrownBy(() -> service.updateStatus(orderId, newStatus))
+                    .isInstanceOf(OrderChangeStatusException.class);
+        }
+    }
+
+    @Test
+    void updateStatus_shouldThrowException_whenTransitionInvalid() {
+        Long orderId = 1L;
+        String newStatus = "COMPLETED";
+        OrderEntity existingOrder = new OrderEntity();
+        existingOrder.setStatus(OrderStatus.NEW);
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(existingOrder));
+
+        try (MockedStatic<SecurityHelper> helperMock = Mockito.mockStatic(SecurityHelper.class)) {
+            helperMock.when(() -> SecurityHelper.isAdmin(any(Authentication.class)))
+                    .thenReturn(false);
+
+            Authentication auth = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication())
+                    .thenReturn(auth);
+            SecurityContextHolder.setContext(securityContext);
+
+            assertThatThrownBy(() -> service.updateStatus(orderId, newStatus))
+                    .isInstanceOf(OrderChangeStatusException.class);
+        }
     }
 }

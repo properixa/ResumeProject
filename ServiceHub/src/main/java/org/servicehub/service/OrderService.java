@@ -100,15 +100,15 @@ public class OrderService {
     @Transactional
     @PreAuthorize("@orderSecurity.canChange(#a0, authentication)")
     public OrderResponse updateStatus(Long id, String status) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAdmin = SecurityHelper.isAdmin(auth);
 
         OrderEntity order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException("Order " + id + " not found"));
         OrderStatus orderStatus = OrderStatus.fromString(status)
                 .orElseThrow(() -> new OrderStatusNotFoundException("Status " + status + " incorrect"));
 
-        if (isAdmin) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (SecurityHelper.isAdmin(auth)) {
             order.setStatus(orderStatus);
             return mapper.toDto(order);
         }
