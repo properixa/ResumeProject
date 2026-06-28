@@ -18,6 +18,7 @@ import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.UserMapper;
 import org.servicehub.repository.RoleRepository;
 import org.servicehub.repository.UserRepository;
+import org.servicehub.repository.specification.UserSpecification;
 import org.servicehub.service.ServicehubUserService;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -98,12 +99,13 @@ class ServicehubUserServiceTest {
     void getAll_shouldReturnUsers() {
         var entity = new UserEntity();
         var dto = new UserResponse(1L, "test", "test", "test");
+        var pageable = Pageable.ofSize(20);
         var userFilter = new UserFilter(null, null, null);
 
-        when(userRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(entity), Pageable.ofSize(20), 1));
+        when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(entity), Pageable.ofSize(20), 1));
         when(mapper.toDto(entity)).thenReturn(dto);
 
-        var result = service.getAll(userFilter, Pageable.ofSize(20)).toList();
+        var result = service.getAll(userFilter, pageable).toList();
         CollectionAssert.assertThatCollection(result).hasSize(1);
     }
 
