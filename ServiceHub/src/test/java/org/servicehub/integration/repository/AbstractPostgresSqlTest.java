@@ -1,4 +1,4 @@
-package org.servicehub.integration.repository.specification;
+package org.servicehub.integration.repository;
 
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;

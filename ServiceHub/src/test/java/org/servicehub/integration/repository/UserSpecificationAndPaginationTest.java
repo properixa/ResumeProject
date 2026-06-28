@@ -1,4 +1,4 @@
-package org.servicehub.integration.repository.specification;
+package org.servicehub.integration.repository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +14,7 @@ import org.servicehub.repository.specification.UserSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -27,7 +28,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = PersistenceTestConfig.class)
 @Transactional
-public class UserSpecificationTest {
+public class UserSpecificationAndPaginationTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -99,5 +100,87 @@ public class UserSpecificationTest {
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().getFirst().getName()).isEqualTo("Valera");
         assertThat(result.getContent().getFirst().getSurname()).isEqualTo("Nekto");
+    }
+
+    @Test
+    void shouldFilterByPartialSearch() {
+        UserFilter filter = new UserFilter("ich", null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().getFirst().getName()).isEqualTo("Roman");
+        assertThat(result.getContent().getLast().getName()).isEqualTo("Valera");
+    }
+
+    @Test
+    void shouldFilterBySearchIgnoringCase() {
+        UserFilter filter = new UserFilter("JOHN", null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().getName()).isEqualTo("John");
+        assertThat(result.getContent().getFirst().getSurname()).isEqualTo("Smith");
+    }
+
+    @Test
+    void shouldFilterByPartitioningEmail() {
+        UserFilter filter = new UserFilter("@email.com", null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(3);
+    }
+
+    @Test
+    void shouldFilterByEmail() {
+        UserFilter filter = new UserFilter("JohnSmith@email.com", null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().getName()).isEqualTo("John");
+    }
+
+    @Test
+    void shouldFilterWhenExtraSpaces() {
+        UserFilter filter = new UserFilter("   John     ", null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().getName()).isEqualTo("John");
+    }
+
+    @Test
+    void shouldFilterWhenNonExists() {
+        UserFilter filter = new UserFilter("Nonexisted", null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(0);
+    }
+
+    @Test
+    void shouldFilterWhenAllNull() {
+        UserFilter filter = new UserFilter(null, null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(3);
+    }
+
+    @Test
+    void shouldRightSort() {
+        UserFilter filter = new UserFilter(null, null, null);
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        Page<UserEntity> result = userRepository.findAll(spec, PageRequest.of(0, 10)
+                .withSort(Sort.by(Sort.Direction.DESC,"phone")));
+
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getContent().getFirst().getName()).isEqualTo("Valera");
+        assertThat(result.getContent().get(1).getName()).isEqualTo("Roman");
+        assertThat(result.getContent().getLast().getName()).isEqualTo("John");
     }
 }

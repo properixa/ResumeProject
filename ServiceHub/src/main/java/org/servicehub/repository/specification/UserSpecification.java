@@ -24,9 +24,9 @@ public class UserSpecification {
 
                 predicates.add(
                         cb.or(
-                                cb.like(cb.lower(root.get("name")), pattern),
-                                cb.like(cb.lower(root.get("surname")), pattern),
-                                cb.like(cb.lower(root.get("patronymic")), pattern),
+                                cb.like(cb.lower(root.get("name")), pattern.toLowerCase()),
+                                cb.like(cb.lower(root.get("surname")), pattern.toLowerCase()),
+                                cb.like(cb.lower(root.get("patronymic")), pattern.toLowerCase()),
                                 cb.like(root.get("email"), pattern)
                         )
                 );
