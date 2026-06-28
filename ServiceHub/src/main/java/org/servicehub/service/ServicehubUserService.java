@@ -1,6 +1,7 @@
 package org.servicehub.service;
 
 import lombok.RequiredArgsConstructor;
+import org.servicehub.dto.filter.UserFilter;
 import org.servicehub.dto.user.UserCreateRequest;
 import org.servicehub.dto.user.UserResponse;
 import org.servicehub.dto.user.UserUpdateRequest;
@@ -12,6 +13,10 @@ import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.UserMapper;
 import org.servicehub.repository.RoleRepository;
 import org.servicehub.repository.UserRepository;
+import org.servicehub.repository.specification.UserSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,8 +49,9 @@ public class ServicehubUserService {
         return mapper.toDto(userRepository.save(user));
     }
 
-    public List<UserResponse> getAll() {
-        return userRepository.findAll().stream().map(mapper::toDto).toList();
+    public Page<UserResponse> getAll(UserFilter filter, Pageable page) {
+        Specification<UserEntity> spec = UserSpecification.fromFilter(filter);
+        return userRepository.findAll(spec, page).map(mapper::toDto);
     }
 
     public UserResponse getById(Long id) {

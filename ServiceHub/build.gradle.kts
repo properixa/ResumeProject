@@ -23,6 +23,9 @@ dependencies {
     testImplementation("jakarta.servlet:jakarta.servlet-api:6.1.0")
     testImplementation("org.hamcrest:hamcrest:3.0")
     testImplementation("com.jayway.jsonpath:json-path:3.0.0")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.4")
+    testImplementation("org.testcontainers:testcontainers-postgresql:2.0.5")
+    testImplementation("org.testcontainers:testcontainers:2.0.5")
 
     // implementations
     implementation("org.springframework:spring-webmvc:7.0.8")

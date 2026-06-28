@@ -3,6 +3,7 @@ package org.servicehub.web.controller;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.servicehub.dto.filter.UserFilter;
 import org.servicehub.dto.user.UserResponse;
 import org.servicehub.dto.user.UserUpdateRequest;
 import org.servicehub.exception.exception.user.DuplicateEmailException;
@@ -10,9 +11,11 @@ import org.servicehub.exception.exception.user.InvalidRoleException;
 import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.service.ServicehubUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Arrays;
@@ -40,20 +43,20 @@ public class UserControllerTest extends AbstractControllerTest {
                 new UserResponse(1L, "name name name", "email", "phone"),
                 new UserResponse(2L, "name name name", "email2", "phone2")
         );
-        Mockito.when(userService.getAll()).thenReturn(mockUsers);
-
+        Page<UserResponse> page = new PageImpl<>(mockUsers, Pageable.ofSize(20), mockUsers.size());
+        when(userService.getAll(any(UserFilter.class), any(Pageable.class))).thenReturn(page);
         mockMvc.perform(MockMvcRequestBuilders.get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].fullName").value("name name name"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].fullName").value("name name name"));
     }
 
     @Test
     void getAll_shouldReturn403_whenForbidden() throws Exception {
-        Mockito.when(userService.getAll())
-                .thenReturn(List.of());
+        when(userService.getAll(any(UserFilter.class), any(Pageable.class)))
+                .thenReturn(Page.empty());
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/users"))
                 .andExpect(status().isForbidden());
@@ -171,9 +174,41 @@ public class UserControllerTest extends AbstractControllerTest {
         UserUpdateRequest request = new UserUpdateRequest("", "", "", "", null);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/users/{id}", userId)
-                .content(objectMapper.writeValueAsString(request))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .content(objectMapper.writeValueAsString(request))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @WithMockUser
+    void getAll_shouldReturnValidFilterAndPageable() throws Exception {
+        List<UserResponse> mockUsers = Arrays.asList(
+                new UserResponse(1L, "name name name", "email", "phone"),
+                new UserResponse(2L, "name name name1", "email2", "phone2")
+        );
+        Pageable pageable = PageRequest.of(1, 5, Sort.by("id").ascending());
+        Page<UserResponse> page = new PageImpl<>(mockUsers, pageable, 10);
+        UserFilter userFilter = new UserFilter("search", "phone", List.of("role"));
+
+        when(userService.getAll(any(UserFilter.class), any(Pageable.class))).thenReturn(page);
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/users")
+                        .param("search", userFilter.search())
+                        .param("phone", userFilter.phone())
+                        .param("roles", userFilter.roles().toArray(new String[0]))
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize()))
+                        .param("sort", "id,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].fullName").value("name name name"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].fullName").value("name name name1"))
+                .andExpect(jsonPath("$.totalElements").value(10))
+                .andExpect(jsonPath("$.totalPages").value(2)) // 10 элементов / 5 на страницу = 2
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.sort.sorted").value(true));
+    }
 }

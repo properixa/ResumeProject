@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.servicehub.dto.filter.UserFilter;
 import org.servicehub.dto.user.UserCreateRequest;
 import org.servicehub.dto.user.UserResponse;
 import org.servicehub.dto.user.UserUpdateRequest;
@@ -17,9 +18,14 @@ import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.UserMapper;
 import org.servicehub.repository.RoleRepository;
 import org.servicehub.repository.UserRepository;
+import org.servicehub.repository.specification.UserSpecification;
 import org.servicehub.service.ServicehubUserService;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -89,14 +95,17 @@ class ServicehubUserServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void getAll_shouldReturnUsers() {
         var entity = new UserEntity();
         var dto = new UserResponse(1L, "test", "test", "test");
+        var pageable = Pageable.ofSize(20);
+        var userFilter = new UserFilter(null, null, null);
 
-        when(userRepository.findAll()).thenReturn(List.of(entity));
+        when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(entity), Pageable.ofSize(20), 1));
         when(mapper.toDto(entity)).thenReturn(dto);
 
-        var result = service.getAll();
+        var result = service.getAll(userFilter, pageable).toList();
         CollectionAssert.assertThatCollection(result).hasSize(1);
     }
 

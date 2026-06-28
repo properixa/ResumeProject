@@ -3,9 +3,9 @@ package org.servicehub.config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
-import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
-import org.slf4j.Logger;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
+import org.servicehub.integration.repository.AbstractPostgresSqlTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -15,15 +15,15 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
-@EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "org.servicehub.repository")
-public class PersistenceConfig {
-
+@EnableTransactionManagement
+public class PersistenceTestConfig {
 
     @Bean(initMethod = "migrate")
     public Flyway flyway(DataSource dataSource) {
@@ -33,41 +33,41 @@ public class PersistenceConfig {
     }
 
     @Bean
+    public LocalValidatorFactoryBean validatorFactory() {
+        LocalValidatorFactoryBean factory = new LocalValidatorFactoryBean();
+        factory.setMessageInterpolator(new ParameterMessageInterpolator());
+        return factory;
+    }
+
+    @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:postgresql://" + env("DB_HOST", "localhost") + ":" +
-                env("DB_PORT", "5432") + "/" + env("DB_NAME", "servicehub"));
-        config.setUsername(env("DB_USER", "servicehub_user"));
-        config.setPassword(env("DB_PASSWORD", "veryHardPassword"));
-        config.setDriverClassName("org.postgresql.Driver");
+        config.setJdbcUrl(AbstractPostgresSqlTest.getJdbcUrl());
+        config.setUsername(AbstractPostgresSqlTest.getUsername());
+        config.setPassword(AbstractPostgresSqlTest.getPassword());
         return new HikariDataSource(config);
     }
 
     @Bean
     @DependsOn("flyway")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
-        LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+        em.setDataSource(dataSource);
+        em.setPackagesToScan("org.servicehub.entity");
+        em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
-        emf.setDataSource(dataSource);
-        emf.setPackagesToScan("org.servicehub.entity");
-        emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         Properties properties = new Properties();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        properties.put("jakarta.persistence.validation.factory", validatorFactory());
         properties.put("hibernate.show_sql", true);
         properties.put("hibernate.format_sql", true);
         properties.put("hibernate.hbm2ddl.auto", "validate");
 
-        emf.setJpaProperties(properties);
-        return emf;
+        em.setJpaProperties(properties);
+        return em;
     }
 
     @Bean
     public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);
-    }
-
-    private String env(String name, String defaultValue) {
-        String value = System.getenv(name);
-        return value != null ? value : defaultValue;
     }
 }
