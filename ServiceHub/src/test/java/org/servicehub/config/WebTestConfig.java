@@ -1,7 +1,6 @@
 package org.servicehub.config;
 
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.servicehub.service.AuthService;
 import org.servicehub.service.OrderService;
@@ -10,7 +9,6 @@ import org.servicehub.service.ServicehubUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
