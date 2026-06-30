@@ -19,6 +19,9 @@ import org.servicehub.mapper.ServiceMapper;
 import org.servicehub.repository.ServiceRepository;
 import org.servicehub.repository.UserRepository;
 import org.servicehub.service.ServiceService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +29,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -83,14 +88,15 @@ public class ServiceServiceTest {
     void findAll_shouldReturnAllUsers() {
         var entity = new ServiceEntity();
         var dto = new ServiceResponse(1L, "test", "test", 1L, "full name");
+        var pageable = Pageable.ofSize(20);
 
-        when(serviceRepository.findAll())
-                .thenReturn(List.of(entity));
+        when(serviceRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(entity), pageable, 1));
         when(mapper.toDto(entity))
                 .thenReturn(dto);
 
-        var result = service.findAll();
-        CollectionAssert.assertThatCollection(result).hasSize(1);
+        var result = service.findAll(pageable);
+        CollectionAssert.assertThatCollection(result.getContent()).hasSize(1);
     }
 
     @Test
@@ -196,5 +202,33 @@ public class ServiceServiceTest {
 
         assertThatThrownBy(() -> service.remove(1L))
                 .isInstanceOf(UserServiceNotFoundException.class);
+    }
+
+    @Test
+    void findByExecutorId_shouldReturnServices() {
+        ServiceEntity service1 = new ServiceEntity();
+        ServiceEntity service2 = new ServiceEntity();
+        service1.setId(1L);
+        service2.setId(2L);
+
+        when(serviceRepository.findAllByExecutorId(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(service1, service2), Pageable.ofSize(20), 2));
+        when(mapper.toDto(service1))
+                .thenReturn(new ServiceResponse(1L, "", "", 1L, "full"));
+        when(mapper.toDto(service2))
+                .thenReturn(new ServiceResponse(2L, "", "", 2L, "name2"));
+
+        var result = service.findAllByExecutorId(1L, Pageable.ofSize(20));
+        assertThat(result.getContent().getFirst().id()).isEqualTo(1L);
+        assertThat(result.getContent().getLast().id()).isEqualTo(2L);
+    }
+
+    @Test
+    void findByExecutorId_shouldReturnEmpty_whenNotFound() {
+        when(serviceRepository.findAllByExecutorId(any(Long.class), any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        var result = service.findAllByExecutorId(1L, Pageable.unpaged());
+        CollectionAssert.assertThatCollection(result.getContent()).isEmpty();
     }
 }

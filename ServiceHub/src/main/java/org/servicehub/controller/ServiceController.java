@@ -6,6 +6,9 @@ import org.servicehub.dto.service.ServiceCreateRequest;
 import org.servicehub.dto.service.ServiceResponse;
 import org.servicehub.dto.service.ServiceUpdateRequest;
 import org.servicehub.service.ServiceService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +23,12 @@ public class ServiceController {
     private final ServiceService service;
 
     @GetMapping
-    public List<ServiceResponse> getAll() {
-        return service.findAll();
+    public Page<ServiceResponse> getAll(@RequestParam(value = "executorId", required = false) Long executorId,
+                                        @PageableDefault Pageable pageable) {
+        if (executorId != null) {
+            return service.findAllByExecutorId(executorId, pageable);
+        }
+        return service.findAll(pageable);
     }
 
     @GetMapping("/{id}")
@@ -33,7 +40,7 @@ public class ServiceController {
     public ResponseEntity<ServiceResponse> update(
             @PathVariable("id") Long id,
             @RequestBody ServiceUpdateRequest request
-            ) {
+    ) {
         return ResponseEntity.ok(service.update(id, request));
     }
 
@@ -41,7 +48,7 @@ public class ServiceController {
     public ResponseEntity<ServiceResponse> create(
             @RequestBody ServiceCreateRequest request,
             @AuthenticationPrincipal UserPrincipal principal
-            ) {
+    ) {
         ServiceResponse response = service.create(request, principal.id());
         return ResponseEntity.created(URI.create("/api/service/" + response.id()))
                 .body(response);

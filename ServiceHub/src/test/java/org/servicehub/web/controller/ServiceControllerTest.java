@@ -1,6 +1,7 @@
 package org.servicehub.web.controller;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.servicehub.dto.auth.UserPrincipal;
 import org.servicehub.dto.service.ServiceCreateRequest;
@@ -11,6 +12,7 @@ import org.servicehub.exception.exception.user.InvalidRoleException;
 import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.service.ServiceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,6 +25,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class ServiceControllerTest extends AbstractControllerTest {
@@ -35,27 +40,29 @@ public class ServiceControllerTest extends AbstractControllerTest {
 
     @Test
     @WithMockUser
-    void getAll_shouldReturnList() throws Exception {
+    void getAll_shouldReturnPage() throws Exception {
         List<ServiceResponse> response = Arrays.asList(
                 new ServiceResponse(1L, "test", "test", 1L, "name name"),
                 new ServiceResponse(2L, "test", "test", 2L, "name name")
         );
+        Pageable pageable = Pageable.ofSize(10);
+        Page<ServiceResponse> page = new PageImpl<>(response, pageable, 10);
 
-        Mockito.when(serviceService.findAll())
-                .thenReturn(response);
+        Mockito.when(serviceService.findAll(pageable))
+                .thenReturn(page);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/service"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].title").value("test"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].title").value("test"));
     }
 
     @Test
     void getAll_shouldReturn403_whenForbidden() throws Exception {
-        Mockito.when(serviceService.findAll())
-                .thenReturn(List.of());
+        Mockito.when(serviceService.findAll(any(Pageable.class)))
+                .thenReturn(Page.empty());
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/service"))
                 .andExpect(status().isForbidden());
@@ -206,5 +213,48 @@ public class ServiceControllerTest extends AbstractControllerTest {
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/service/{id}", serviceId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void getAll_shouldReturnRightPage() throws Exception {
+        List<ServiceResponse> response = Arrays.asList(
+                new ServiceResponse(1L, "test", "test", 1L, "name name"),
+                new ServiceResponse(2L, "test", "test", 2L, "name name")
+        );
+        Pageable pageable = PageRequest.of(1, 5, Sort.by("id").ascending());
+        Page<ServiceResponse> page = new PageImpl<>(response, pageable, 10);
+
+        Mockito.when(serviceService.findAll(any(Pageable.class)))
+                        .thenReturn(page);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/service")
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize()))
+                        .param("sort", "id,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.totalElements").value(10))
+                .andExpect(jsonPath("$.totalPages").value(2)) // 10 элементов / 5 на страницу = 2
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.sort.sorted").value(true));
+    }
+
+    @Test
+    @WithMockUser
+    void getAll_shouldCallWithExecutorId() throws Exception {
+        Page<ServiceResponse> page = new PageImpl<>(List.of());
+
+        Mockito.when(serviceService.findAllByExecutorId(any(Long.class), any(Pageable.class)))
+                .thenReturn(page);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/service")
+                .param("executorId", "1"));
+
+        verify(serviceService).findAllByExecutorId(eq(1L), any(Pageable.class));
     }
 }

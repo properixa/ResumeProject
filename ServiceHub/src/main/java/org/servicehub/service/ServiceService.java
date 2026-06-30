@@ -13,11 +13,11 @@ import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.mapper.ServiceMapper;
 import org.servicehub.repository.ServiceRepository;
 import org.servicehub.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +40,14 @@ public class ServiceService {
         return mapper.toDto(serviceRepository.save(entity));
     }
 
+    @Transactional
+    public Page<ServiceResponse> findAllByExecutorId(Long id, Pageable pageable) {
+        return serviceRepository.findAllByExecutorId(id, pageable).map(mapper::toDto);
+    }
+
     @Transactional(readOnly = true)
-    public List<ServiceResponse> findAll() {
-        return serviceRepository.findAll().stream().map(mapper::toDto).toList();
+    public Page<ServiceResponse> findAll(Pageable pageable) {
+        return serviceRepository.findAll(pageable).map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)
