@@ -44,7 +44,9 @@ public class UserControllerTest extends AbstractControllerTest {
                 new UserResponse(2L, "name name name", "email2", "phone2")
         );
         Page<UserResponse> page = new PageImpl<>(mockUsers, Pageable.ofSize(20), mockUsers.size());
+
         when(userService.getAll(any(UserFilter.class), any(Pageable.class))).thenReturn(page);
+
         mockMvc.perform(MockMvcRequestBuilders.get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))

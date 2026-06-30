@@ -1,12 +1,13 @@
 package org.servicehub.web.controller;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.servicehub.dto.auth.UserPrincipal;
+import org.servicehub.dto.filter.OrderFilter;
 import org.servicehub.dto.order.OrderCreateRequest;
 import org.servicehub.dto.order.OrderResponse;
 import org.servicehub.dto.order.OrderUpdateRequest;
+import org.servicehub.entity.enums.OrderStatus;
 import org.servicehub.exception.exception.order.InvalidForServiceExecutorException;
 import org.servicehub.exception.exception.order.OrderChangeStatusException;
 import org.servicehub.exception.exception.order.OrderNotFoundException;
@@ -14,6 +15,7 @@ import org.servicehub.exception.exception.order.OrderStatusNotFoundException;
 import org.servicehub.exception.exception.user.UserNotFoundException;
 import org.servicehub.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,8 +24,11 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class OrderControllerTest extends AbstractControllerTest {
@@ -37,19 +42,21 @@ public class OrderControllerTest extends AbstractControllerTest {
     @Test
     @WithMockUser
     void getAll_shouldReturnList() throws Exception {
+        OrderFilter filter = new OrderFilter(null, null);
         List<OrderResponse> responses = List.of(
                 new OrderResponse(1L, 1L, 1L, 1L, "test", "NEW"),
                 new OrderResponse(2L, 1L, 2L, 2L, "test", "NEW")
         );
+        Page<OrderResponse> page = new PageImpl<>(responses, Pageable.ofSize(10), 10);
 
-        Mockito.when(orderService.findAll())
-                .thenReturn(responses);
+        when(orderService.findAll(any(OrderFilter.class), any(Pageable.class)))
+                .thenReturn(page);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/order"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1L));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1L));
     }
 
     @Test
@@ -64,7 +71,7 @@ public class OrderControllerTest extends AbstractControllerTest {
         Long orderId = 1L;
         OrderResponse response = new OrderResponse(1L, 1L, 1L, 1L, "test", "test");
 
-        Mockito.when(orderService.findById(orderId))
+        when(orderService.findById(orderId))
                 .thenReturn(response);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/order/{id}", orderId))
@@ -90,7 +97,7 @@ public class OrderControllerTest extends AbstractControllerTest {
         OrderUpdateRequest request = new OrderUpdateRequest(1L, 1L, "test", "test");
         OrderResponse response = new OrderResponse(orderId, 1L, 1L, 1L, "test", "test");
 
-        Mockito.when(orderService.update(orderId, request))
+        when(orderService.update(orderId, request))
                 .thenReturn(response);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/order/{id}", orderId)
@@ -173,7 +180,7 @@ public class OrderControllerTest extends AbstractControllerTest {
         OrderCreateRequest request = new OrderCreateRequest(1L, 1L, "test");
         OrderResponse response = new OrderResponse(1L, 1L, 1L, 1L, "test", "NEW");
 
-        Mockito.when(orderService.create(request, principal))
+        when(orderService.create(request, principal))
                 .thenReturn(response);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/order")
@@ -235,7 +242,7 @@ public class OrderControllerTest extends AbstractControllerTest {
         String newStatus = "ACCEPTED";
         OrderResponse response = new OrderResponse(orderId, 1L, 1L, 1L, "", "");
 
-        Mockito.when(orderService.updateStatus(orderId, newStatus))
+        when(orderService.updateStatus(orderId, newStatus))
                 .thenReturn(response);
 
         mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
@@ -249,7 +256,7 @@ public class OrderControllerTest extends AbstractControllerTest {
         Long orderId = 1L;
         String newStatus = "NEW";
 
-        Mockito.when(orderService.updateStatus(orderId, newStatus))
+        when(orderService.updateStatus(orderId, newStatus))
                 .thenThrow(OrderNotFoundException.class);
 
         mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
@@ -262,7 +269,7 @@ public class OrderControllerTest extends AbstractControllerTest {
         Long orderId = 1L;
         String newStatus = "INVALID";
 
-        Mockito.when(orderService.updateStatus(orderId, newStatus))
+        when(orderService.updateStatus(orderId, newStatus))
                 .thenThrow(OrderStatusNotFoundException.class);
 
         mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
@@ -275,10 +282,39 @@ public class OrderControllerTest extends AbstractControllerTest {
         Long orderId = 1L;
         String newStatus = "STATUS";
 
-        Mockito.when(orderService.updateStatus(orderId, newStatus))
+        when(orderService.updateStatus(orderId, newStatus))
                 .thenThrow(OrderChangeStatusException.class);
 
         mockMvc.perform(MockMvcRequestBuilders.patch("/api/order/{id}/{status}", orderId, newStatus))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    void getAll_shouldReturnWithValidPage() throws Exception {
+        List<OrderResponse> responses = List.of(
+                new OrderResponse(1L, 1L, 1L, 1L, "test", "NEW"),
+                new OrderResponse(2L, 1L, 2L, 2L, "test", "NEW")
+        );
+        Pageable pageable = PageRequest.of(1, 5, Sort.by("id").ascending());
+        Page<OrderResponse> page = new PageImpl<>(responses, pageable, 10);
+        OrderFilter filter = new OrderFilter(null, OrderStatus.NEW);
+
+        when(orderService.findAll(any(OrderFilter.class), any(Pageable.class))).thenReturn(page);
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/order")
+                        .param("status", filter.status().toString())
+                        .param("page", String.valueOf(pageable.getPageNumber()))
+                        .param("size", String.valueOf(pageable.getPageSize()))
+                        .param("sort", "id,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.totalElements").value(10))
+                .andExpect(jsonPath("$.totalPages").value(2)) // 10 элементов / 5 на страницу = 2
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.sort.sorted").value(true));
     }
 }

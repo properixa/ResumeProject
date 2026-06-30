@@ -2,6 +2,7 @@ package org.servicehub.service;
 
 import lombok.RequiredArgsConstructor;
 import org.servicehub.dto.auth.UserPrincipal;
+import org.servicehub.dto.filter.OrderFilter;
 import org.servicehub.dto.order.OrderCreateRequest;
 import org.servicehub.dto.order.OrderResponse;
 import org.servicehub.dto.order.OrderUpdateRequest;
@@ -21,7 +22,11 @@ import org.servicehub.mapper.OrderMapper;
 import org.servicehub.repository.OrderRepository;
 import org.servicehub.repository.ServiceRepository;
 import org.servicehub.repository.UserRepository;
+import org.servicehub.repository.specification.OrderSpecification;
 import org.servicehub.util.security.SecurityHelper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -66,8 +71,9 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderResponse> findAll() {
-        return orderRepository.findAll().stream().map(mapper::toDto).toList();
+    public Page<OrderResponse> findAll(OrderFilter filter, Pageable page) {
+        Specification<OrderEntity> spec = OrderSpecification.fromFilter(filter);
+        return orderRepository.findAll(spec, page).map(mapper::toDto);
     }
 
     @Transactional

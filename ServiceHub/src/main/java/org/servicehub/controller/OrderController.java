@@ -4,16 +4,19 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.servicehub.dto.auth.UserPrincipal;
+import org.servicehub.dto.filter.OrderFilter;
 import org.servicehub.dto.order.OrderCreateRequest;
 import org.servicehub.dto.order.OrderResponse;
 import org.servicehub.dto.order.OrderUpdateRequest;
 import org.servicehub.service.OrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/order")
@@ -32,8 +35,9 @@ public class OrderController {
     }
 
     @GetMapping
-    public List<OrderResponse> getAll() {
-        return orderService.findAll();
+    public Page<OrderResponse> getAll(@ModelAttribute OrderFilter filter,
+                                      @PageableDefault Pageable pageable) {
+        return orderService.findAll(filter, pageable);
     }
 
     @GetMapping("/{id}")
