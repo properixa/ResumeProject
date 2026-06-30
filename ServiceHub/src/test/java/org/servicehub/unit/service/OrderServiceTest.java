@@ -9,6 +9,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.servicehub.dto.auth.UserPrincipal;
+import org.servicehub.dto.filter.OrderFilter;
 import org.servicehub.dto.order.OrderCreateRequest;
 import org.servicehub.dto.order.OrderResponse;
 import org.servicehub.dto.order.OrderUpdateRequest;
@@ -27,8 +28,12 @@ import org.servicehub.mapper.OrderMapper;
 import org.servicehub.repository.OrderRepository;
 import org.servicehub.repository.ServiceRepository;
 import org.servicehub.repository.UserRepository;
+import org.servicehub.repository.specification.OrderSpecification;
 import org.servicehub.service.OrderService;
 import org.servicehub.util.security.SecurityHelper;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -131,16 +136,19 @@ public class OrderServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void findAll_shouldReturn() {
-        var entity = new OrderEntity();
+        OrderEntity order1 = new OrderEntity();
+        OrderEntity order2 = new OrderEntity();
+        Pageable pageable = Pageable.ofSize(10);
+        OrderFilter orderFilter = new OrderFilter(null, null);
+        Specification<OrderEntity> spec = OrderSpecification.fromFilter(orderFilter);
 
-        when(orderRepository.findAll())
-                .thenReturn(List.of(entity));
-        when(mapper.toDto(entity))
-                .thenReturn(new OrderResponse(1L, 1L, 1L, 1L, "test", "test"));
+        when(orderRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(order1, order2), pageable, 10));
 
-        var result = service.findAll();
-        CollectionAssert.assertThatCollection(result).hasSize(1);
+        var result = service.findAll(orderFilter, pageable).toList();
+        CollectionAssert.assertThatCollection(result).hasSize(2);
     }
 
     @Test
