@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 public class WebInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+
     @Override
     protected Class<?> @Nullable [] getRootConfigClasses() {
         return new Class<?>[]{RootConfig.class};
