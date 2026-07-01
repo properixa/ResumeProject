@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.servicehub.component.security.ServicehubUserDetails;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
+    @Getter
     private final SecretKey key = Keys.hmacShaKeyFor(
             "super-secret-key-for-this-application-hehehehehe".getBytes(StandardCharsets.UTF_8)
     );

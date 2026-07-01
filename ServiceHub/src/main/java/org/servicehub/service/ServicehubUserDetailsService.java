@@ -35,7 +35,7 @@ public class ServicehubUserDetailsService implements UserDetailsService {
 
         return new ServicehubUserDetails(
                 userEntity.getId(),
-                username,
+                userEntity.getEmail(),
                 userEntity.getPassword(),
                 userEntity.getEnabled(),
                 true,

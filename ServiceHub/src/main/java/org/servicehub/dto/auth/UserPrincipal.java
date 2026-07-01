@@ -1,6 +1,8 @@
 package org.servicehub.dto.auth;
 
+import lombok.Getter;
+
 public record UserPrincipal(
-        Long id,
-        String email
+        @Getter Long id,
+        @Getter String email
 ) {}
